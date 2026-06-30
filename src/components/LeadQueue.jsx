@@ -68,8 +68,8 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLe
         </div>
       ) : (
         <div className="grid gap-6">
-          {visibleLeads.map((lead, idx) => (
-            <LeadCard key={idx} lead={lead} onUpdated={onLeadUpdated} onDeleted={onLeadDeleted} />
+          {visibleLeads.map((lead) => (
+            <LeadCard key={lead.id} lead={lead} onUpdated={onLeadUpdated} onDeleted={onLeadDeleted} />
           ))}
         </div>
       )}
