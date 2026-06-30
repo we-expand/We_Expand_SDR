@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { normalizeDbLead } from '../lib/leadAdapter';
+import { apiUrl } from '../lib/apiUrl';
 
 function emailStatus(lead) {
   if (lead.emailValid === null || lead.emailValid === undefined) return null;
@@ -52,15 +53,40 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated }) {
   );
 }
 
+function buildWhatsappUrl(phone, message) {
+  const digits = (phone || '').replace(/\D/g, '');
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}
+
 function LeadCard({ lead, onUpdated }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState(null);
+  const [copiedChannel, setCopiedChannel] = useState(null);
+
+  async function handleOutreach(channel) {
+    const message = lead.outreachMessage || '';
+    try {
+      await navigator.clipboard.writeText(message);
+      setCopiedChannel(channel);
+      setTimeout(() => setCopiedChannel(null), 2000);
+    } catch {
+      // clipboard indisponível, segue só com o link
+    }
+
+    if (channel === 'email' && lead.email) {
+      window.open(`mailto:${lead.email}?subject=${encodeURIComponent('Vamos conversar?')}&body=${encodeURIComponent(message)}`, '_blank');
+    } else if (channel === 'linkedin' && lead.linkedin) {
+      window.open(lead.linkedin, '_blank', 'noopener,noreferrer');
+    } else if (channel === 'whatsapp' && lead.phone) {
+      window.open(buildWhatsappUrl(lead.phone, message), '_blank', 'noopener,noreferrer');
+    }
+  }
 
   async function handleAnalyze() {
     setAnalyzing(true);
     setAnalyzeError(null);
     try {
-      const res = await fetch('/api/score-leads', {
+      const res = await fetch(apiUrl('/api/score-leads'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: [lead.id] }),
@@ -191,17 +217,33 @@ function LeadCard({ lead, onUpdated }) {
               {lead.outreachMessage ? `"${lead.outreachMessage}"` : 'Aguardando geração de mensagem pela IA'}
             </div>
             <div className="flex gap-2 mt-4">
-              <button className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition-colors text-sm">
-                📩 E-mail
+              <button
+                onClick={() => handleOutreach('email')}
+                disabled={!lead.outreachMessage}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors text-sm"
+              >
+                {copiedChannel === 'email' ? '✅ Copiado!' : '📩 E-mail'}
               </button>
-              <button className="flex-1 px-4 py-2 bg-blue-900 hover:bg-blue-950 text-white font-semibold rounded transition-colors text-sm">
-                🔗 LinkedIn
+              <button
+                onClick={() => handleOutreach('linkedin')}
+                disabled={!lead.outreachMessage}
+                className="flex-1 px-4 py-2 bg-blue-900 hover:bg-blue-950 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors text-sm"
+              >
+                {copiedChannel === 'linkedin' ? '✅ Copiado!' : '🔗 LinkedIn'}
               </button>
-              <button className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded transition-colors text-sm">
-                💬 WhatsApp
+              <button
+                onClick={() => handleOutreach('whatsapp')}
+                disabled={!lead.outreachMessage}
+                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors text-sm"
+              >
+                {copiedChannel === 'whatsapp' ? '✅ Copiado!' : '💬 WhatsApp'}
               </button>
-              <button className="flex-1 px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white font-semibold rounded transition-colors text-sm">
-                📷 Instagram
+              <button
+                onClick={() => handleOutreach('instagram')}
+                disabled={!lead.outreachMessage}
+                className="flex-1 px-4 py-2 bg-pink-600 hover:bg-pink-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors text-sm"
+              >
+                {copiedChannel === 'instagram' ? '✅ Copiado!' : '📷 Instagram'}
               </button>
             </div>
           </div>

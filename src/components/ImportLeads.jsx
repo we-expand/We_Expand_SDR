@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiUrl } from '../lib/apiUrl';
 
 export default function ImportLeads({ onBack }) {
   const [mode, setMode] = useState('apollo'); // 'apollo' | 'linkedin'
@@ -13,7 +14,7 @@ export default function ImportLeads({ onBack }) {
     setError(null);
     setResult(null);
     try {
-      const endpoint = mode === 'apollo' ? '/api/import-apollo-csv' : '/api/import-linkedin-text';
+      const endpoint = apiUrl(mode === 'apollo' ? '/api/import-apollo-csv' : '/api/import-linkedin-text');
       const body = mode === 'apollo' ? { csv } : { text };
       const res = await fetch(endpoint, {
         method: 'POST',

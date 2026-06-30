@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
   Object.assign(process.env, env)
 
   return {
+    base: '/sdr/',
     plugins: [react(), apiDevMiddleware()],
   }
 })

@@ -5,6 +5,7 @@ import ImportLeads from './components/ImportLeads';
 import { mockLeads } from './data/mockLeads';
 import { matchesBooleanQuery } from './lib/booleanSearch';
 import { normalizeDbLead } from './lib/leadAdapter';
+import { apiUrl } from './lib/apiUrl';
 
 function App() {
   const [screen, setScreen] = useState('config'); // 'config' | 'queue' | 'import'
@@ -16,7 +17,7 @@ function App() {
     setLoadingRealLeads(true);
     setCriteria(null);
     try {
-      const res = await fetch('/api/leads');
+      const res = await fetch(apiUrl('/api/leads'));
       const data = await res.json();
       setFilteredLeads((data.leads || []).map(normalizeDbLead));
     } catch {

@@ -11,7 +11,7 @@ MVP de SDR automatizado (Sales Development Rep) a partir do ImobHunter. **Projet
 
 - **Frontend**: SPA Vite (React 19 + Tailwind v4)
 - **Backend**: Serverless functions em `api/` (Vercel convention, mas dev roda via plugin Vite)
-- **Database**: Supabase pago (`imob_hunter` project, id `evdyqlrssgsktctjruuq`)
+- **Database**: Supabase **gratuito**, organização própria `We_Expand_SDR` (separada da org paga "We Expand"), projeto `We_Expand_SDR`, id `tjoqwunmfwaqgoxkwvpg`
 - **IA**: Groq (llama-3.3-70b-versatile, free tier, sem cartão)
 - **APIs externas**: Apollo (free tier, CSV export apenas), Supabase, Groq
 - **Deploy**: Pendente (não feito git init ainda)
