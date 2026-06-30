@@ -71,6 +71,10 @@ function App() {
     setFilteredLeads(prev => prev.map(l => (l.id === updatedLead.id ? updatedLead : l)));
   };
 
+  const handleLeadDeleted = (deletedId) => {
+    setFilteredLeads(prev => prev.filter(l => l.id !== deletedId));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <nav className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
@@ -112,6 +116,7 @@ function App() {
             criteria={criteria}
             onBack={handleBackToConfig}
             onLeadUpdated={handleLeadUpdated}
+            onLeadDeleted={handleLeadDeleted}
           />
         )}
       </div>

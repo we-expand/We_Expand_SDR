@@ -17,7 +17,11 @@ function ContactBadge({ status }) {
   );
 }
 
-export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated }) {
+export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLeadDeleted }) {
+  const [minScore, setMinScore] = useState(0);
+
+  const visibleLeads = leads.filter(lead => (lead.score ?? 0) >= minScore);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -25,7 +29,8 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated }) {
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Fila de leads quentes</h2>
           <p className="text-gray-600 mt-2">
-            {leads.length} {leads.length === 1 ? 'lead encontrado' : 'leads encontrados'}
+            {visibleLeads.length} {visibleLeads.length === 1 ? 'lead encontrado' : 'leads encontrados'}
+            {minScore > 0 && ` (de ${leads.length} no total)`}
           </p>
         </div>
         <button
@@ -36,16 +41,35 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated }) {
         </button>
       </div>
 
+      {/* Filtro de score mínimo */}
+      {leads.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm p-4 flex items-center gap-4">
+          <label htmlFor="min-score" className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+            🎯 Score mínimo: {minScore}
+          </label>
+          <input
+            id="min-score"
+            type="range"
+            min="0"
+            max="100"
+            step="10"
+            value={minScore}
+            onChange={(e) => setMinScore(Number(e.target.value))}
+            className="flex-1"
+          />
+        </div>
+      )}
+
       {/* Leads */}
-      {leads.length === 0 ? (
+      {visibleLeads.length === 0 ? (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
           <p className="text-yellow-800 text-lg">😔 Nenhum lead encontrado com esses critérios.</p>
           <p className="text-yellow-700 text-sm mt-2">Tente ajustar os filtros.</p>
         </div>
       ) : (
         <div className="grid gap-6">
-          {leads.map((lead, idx) => (
-            <LeadCard key={idx} lead={lead} onUpdated={onLeadUpdated} />
+          {visibleLeads.map((lead, idx) => (
+            <LeadCard key={idx} lead={lead} onUpdated={onLeadUpdated} onDeleted={onLeadDeleted} />
           ))}
         </div>
       )}
@@ -58,10 +82,28 @@ function buildWhatsappUrl(phone, message) {
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
 
-function LeadCard({ lead, onUpdated }) {
+function LeadCard({ lead, onUpdated, onDeleted }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState(null);
   const [copiedChannel, setCopiedChannel] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!window.confirm(`Excluir "${lead.name}" definitivamente?`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(apiUrl('/api/leads'), {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: lead.id }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Falha ao excluir');
+      onDeleted?.(lead.id);
+    } catch (err) {
+      setDeleting(false);
+      window.alert(err.message);
+    }
+  }
 
   async function handleOutreach(channel) {
     const message = lead.outreachMessage || '';
@@ -207,6 +249,13 @@ function LeadCard({ lead, onUpdated }) {
                   🌐 Website
                 </a>
               )}
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-3 py-2 bg-red-50 hover:bg-red-100 disabled:opacity-60 text-red-700 font-semibold text-sm rounded transition-colors"
+              >
+                {deleting ? '...' : '🗑️ Excluir'}
+              </button>
             </div>
           </div>
 

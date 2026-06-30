@@ -14,9 +14,10 @@ export function apiDevMiddleware() {
     name: 'api-dev-middleware',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        if (!req.url.startsWith('/api/')) return next();
+        const match = req.url.match(/\/api\/(.+?)(?:\?|$)/);
+        if (!match) return next();
 
-        const fnName = req.url.split('?')[0].replace('/api/', '');
+        const fnName = match[1];
         const modulePath = path.resolve(process.cwd(), 'api', `${fnName}.js`);
 
         let handlerModule;
@@ -29,7 +30,7 @@ export function apiDevMiddleware() {
         }
 
         let body = undefined;
-        if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
+        if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH' || req.method === 'DELETE') {
           const raw = await readBody(req);
           try {
             body = raw ? JSON.parse(raw) : {};
