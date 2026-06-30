@@ -269,23 +269,26 @@ function LeadCard({ lead, onUpdated, onDeleted }) {
               <button
                 onClick={() => handleOutreach('email')}
                 disabled={!lead.outreachMessage}
+                title={lead.email ? 'Copia a mensagem e abre seu e-mail com o contato preenchido' : 'Sem e-mail cadastrado: só copia a mensagem'}
                 className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors text-sm"
               >
-                {copiedChannel === 'email' ? '✅ Copiado!' : '📩 E-mail'}
+                {copiedChannel === 'email' ? '✅ Copiado!' : lead.email ? '📩 E-mail' : '📩 E-mail (só copia)'}
               </button>
               <button
                 onClick={() => handleOutreach('linkedin')}
                 disabled={!lead.outreachMessage}
+                title={lead.linkedin ? 'Copia a mensagem e abre o perfil do LinkedIn' : 'Sem LinkedIn cadastrado: só copia a mensagem'}
                 className="flex-1 px-4 py-2 bg-blue-900 hover:bg-blue-950 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors text-sm"
               >
-                {copiedChannel === 'linkedin' ? '✅ Copiado!' : '🔗 LinkedIn'}
+                {copiedChannel === 'linkedin' ? '✅ Copiado!' : lead.linkedin ? '🔗 LinkedIn' : '🔗 LinkedIn (só copia)'}
               </button>
               <button
                 onClick={() => handleOutreach('whatsapp')}
                 disabled={!lead.outreachMessage}
+                title={lead.phone ? 'Copia a mensagem e abre o WhatsApp já no chat do contato' : 'Sem telefone cadastrado: só copia a mensagem'}
                 className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors text-sm"
               >
-                {copiedChannel === 'whatsapp' ? '✅ Copiado!' : '💬 WhatsApp'}
+                {copiedChannel === 'whatsapp' ? '✅ Copiado!' : lead.phone ? '💬 WhatsApp' : '💬 WhatsApp (só copia)'}
               </button>
               <button
                 onClick={() => handleOutreach('instagram')}
