@@ -17,10 +17,56 @@ function ContactBadge({ status }) {
   );
 }
 
-export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLeadDeleted }) {
+export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLeadDeleted, onLeadsBulkDeleted }) {
   const [minScore, setMinScore] = useState(0);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const visibleLeads = leads.filter(lead => (lead.score ?? 0) >= minScore);
+  const visibleIds = visibleLeads.map(l => l.id);
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
+
+  function toggleSelect(id) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAllVisible() {
+    setSelectedIds(prev => {
+      if (allVisibleSelected) {
+        const next = new Set(prev);
+        visibleIds.forEach(id => next.delete(id));
+        return next;
+      }
+      return new Set([...prev, ...visibleIds]);
+    });
+  }
+
+  async function handleBulkDelete() {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    if (!window.confirm(`Excluir ${ids.length} lead(s) selecionado(s) definitivamente?`)) return;
+
+    setBulkDeleting(true);
+    try {
+      const res = await fetch(apiUrl('/api/leads'), {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Falha ao excluir');
+      onLeadsBulkDeleted?.(ids);
+      setSelectedIds(new Set());
+    } catch (err) {
+      window.alert(err.message);
+    } finally {
+      setBulkDeleting(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -60,6 +106,28 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLe
         </div>
       )}
 
+      {/* Seleção em massa */}
+      {visibleLeads.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between gap-4">
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={allVisibleSelected}
+              onChange={toggleSelectAllVisible}
+              className="w-4 h-4"
+            />
+            Selecionar todos os {visibleLeads.length} visíveis
+          </label>
+          <button
+            onClick={handleBulkDelete}
+            disabled={selectedIds.size === 0 || bulkDeleting}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            {bulkDeleting ? 'Excluindo...' : `🗑️ Excluir selecionados (${selectedIds.size})`}
+          </button>
+        </div>
+      )}
+
       {/* Leads */}
       {visibleLeads.length === 0 ? (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
@@ -69,7 +137,14 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLe
       ) : (
         <div className="grid gap-6">
           {visibleLeads.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} onUpdated={onLeadUpdated} onDeleted={onLeadDeleted} />
+            <LeadCard
+              key={lead.id}
+              lead={lead}
+              onUpdated={onLeadUpdated}
+              onDeleted={onLeadDeleted}
+              selected={selectedIds.has(lead.id)}
+              onToggleSelect={() => toggleSelect(lead.id)}
+            />
           ))}
         </div>
       )}
@@ -82,7 +157,7 @@ function buildWhatsappUrl(phone, message) {
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
 
-function LeadCard({ lead, onUpdated, onDeleted }) {
+function LeadCard({ lead, onUpdated, onDeleted, selected, onToggleSelect }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState(null);
   const [copiedChannel, setCopiedChannel] = useState(null);
@@ -147,8 +222,18 @@ function LeadCard({ lead, onUpdated, onDeleted }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-500">
+    <div className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 ${selected ? 'border-red-500 ring-2 ring-red-200' : 'border-blue-500'}`}>
       <div className="flex gap-6">
+        {/* Seleção */}
+        <div className="flex-shrink-0 pt-1">
+          <input
+            type="checkbox"
+            checked={!!selected}
+            onChange={onToggleSelect}
+            className="w-5 h-5"
+            title="Selecionar para exclusão em massa"
+          />
+        </div>
         {/* Avatar + info básica */}
         <div className="flex-shrink-0 flex flex-col items-center">
           {lead.avatar ? (
