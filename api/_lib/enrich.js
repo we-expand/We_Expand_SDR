@@ -2,10 +2,9 @@ import { scoreLeadWithGroq } from './groq.js';
 import { verifyEmail, verifyPhone } from './verify.js';
 
 export async function enrichLead(supabase, lead) {
-  const [analysis, emailCheck] = await Promise.all([
-    scoreLeadWithGroq(lead).catch(() => null),
-    verifyEmail(lead.email),
-  ]);
+  const emailCheck = await verifyEmail(lead.email);
+
+  const analysis = await scoreLeadWithGroq(lead).catch(() => null);
   const phoneCheck = verifyPhone(lead.phone);
 
   const update = {

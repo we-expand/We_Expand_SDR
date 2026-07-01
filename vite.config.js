@@ -10,5 +10,8 @@ export default defineConfig(({ mode }) => {
   return {
     base: '/sdr/',
     plugins: [react(), apiDevMiddleware()],
+    server: {
+      port: process.env.PORT ? Number(process.env.PORT) : 5173,
+    },
   }
 })

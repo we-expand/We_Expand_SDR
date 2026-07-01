@@ -173,3 +173,24 @@ git push -u origin main
 **Última atualização**: 2026-06-25 (após implementação Groq + city/verification columns)
 
 **Próximo focus**: Refinamento geográfico (cidades) + email/telefone visual + fluxo LinkedIn paste
+
+---
+
+## 🗓️ Log de sessões
+
+Registro cronológico do que foi discutido e feito em cada sessão de trabalho.
+
+### 2026-07-01
+- Botão LinkedIn no LeadCard corrigido: antes ficava desabilitado sem `outreachMessage`; agora abre o perfil sempre que houver `linkedin_url`, independente de haver mensagem gerada.
+- Busca real implementada: tela "Buscar" deixou de usar `mockLeads` e agora consulta `GET /api/leads` com filtros (`q`, `titles`, `locations`, `cities`, `min_score`) direto no Supabase. `src/data/mockLeads.js` e `booleanSearch.js` não são mais usados na busca principal.
+- Lista de cargos expandida (31 opções) + campo de cargo customizado (chip removível) em `SearchConfig.jsx`.
+- Paginação adicionada em `LeadQueue.jsx`: 50/100 leads por página, navegação com números + elipse.
+- Discutido: importar as ~4.400 conexões do LinkedIn do Cleber via export oficial (Configurações → Privacidade de dados → Obter cópia dos dados → Conexões). Suporte a esse CSV ainda não implementado no `ImportLeads.jsx`.
+- Discutido e recusado: criar conta "descartável" no LinkedIn para monitorar posts/contratações via bot. Risco de ban + necessidade de servidor 24/7 tornam inviável dentro do orçamento R$0. Decisão: usar Google Custom Search API (site-restricted a LinkedIn/portais de vagas) em vez de scraping.
+- **Abandonado**: integração Google Custom Search API (vagas abertas, menções da empresa). Motivo: exige cartão vinculado à conta de billing mesmo no tier grátis, e uma vez vinculado o Google pode cobrar automaticamente se passar da cota — incompatível com o requisito de R$0 garantido do Cleber (ele não tem cartão pra colocar de qualquer forma). Removido `api/_lib/googleSearch.js`, e `enrichLead`/`scoreLeadWithGroq` voltaram a não depender de busca externa. Env vars `GOOGLE_API_KEY`/`GOOGLE_SEARCH_CX` removidas do `.env.local` (a API key `AIzaSyAwzlDmwjgEojGAQxu7gLJU-C09QAiWmIY` ficou órfã no Google Cloud — recomendado ao Cleber excluir/revogar ela no console, já que não é mais usada). Substituído por: `scoreLeadWithGroq` agora recebe `lead.raw_text` (texto colado manualmente do LinkedIn/Apollo) e o prompt do Groq foi reforçado pra procurar ativamente por sinais de contratação ("estamos contratando", "vaga aberta", posts de expansão de equipe) dentro desse texto já colado — zero automação/API nova, só melhor uso do que já existia.
+- Pedido do Cleber: salvar log de conversas automaticamente neste arquivo ao final de cada sessão. Nota: isso exige um hook de `Stop` configurado via skill `update-config` para ser verdadeiramente automático — ainda não configurado.
+
+### 2026-07-01 (continuação, outra janela)
+- Abandonada a integração Google Custom Search API (motivo: exige cartão vinculado ao billing mesmo no free tier, e uma vez vinculado o Google pode cobrar automaticamente se passar da cota — incompatível com R$0 garantido, e o Cleber não tem cartão). Removido `api/_lib/googleSearch.js` e envs `GOOGLE_API_KEY`/`GOOGLE_SEARCH_CX`. `scoreLeadWithGroq` passou a usar `lead.raw_text` (texto já colado manualmente) pra procurar sinais de contratação, sem API nova.
+- **Import das conexões oficiais do LinkedIn implementado**: novo endpoint `api/import-linkedin-connections.js`, processa em lotes de 150 (evita timeout de serverless com ~4.400 linhas), chamado em loop pelo frontend até `done: true`. `api/_lib/csv.js` ganhou `stripLinkedInConnectionsPreamble()` (o export oficial do LinkedIn tem um preâmbulo de notas antes do header real) e aliases novos (`URL` → linkedin_url, `Position` → title). Sem chamada automática ao Groq por linha (import de 4.400 leads de uma vez custaria tempo/rate-limit demais) — os leads entram com `source: 'linkedin_connections'` sem score, e usam o botão "🤖 Analisar com IA" existente quando o Cleber quiser priorizar algum. UI: `ImportLeads.jsx` ganhou 3ª aba "Conexões do LinkedIn (CSV)" com upload de arquivo (em vez de colar texto) + barra de progresso.
+- **Não testado no preview do browser** nesta sessão — outra janela estava com o dev server rodando na porta 5173 e o preview desta sessão não conseguiu iniciar uma instância própria. Verificado apenas via `node --check` (sintaxe ok) e teste isolado do parser CSV com uma amostra do formato real do LinkedIn (preâmbulo + header `First Name,Last Name,URL,Email Address,Company,Position,Connected On`) — parseou corretamente. Recomendo testar no navegador antes de considerar essa feature pronta.

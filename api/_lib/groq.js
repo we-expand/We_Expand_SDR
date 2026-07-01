@@ -1,5 +1,8 @@
 export async function scoreLeadWithGroq(lead) {
-  const prompt = `Lead: ${lead.name}, ${lead.title || 'cargo desconhecido'} na ${lead.company || 'empresa desconhecida'}, ${lead.city ? lead.city + ', ' : ''}${lead.country || 'país desconhecido'}.`;
+  let prompt = `Lead: ${lead.name}, ${lead.title || 'cargo desconhecido'} na ${lead.company || 'empresa desconhecida'}, ${lead.city ? lead.city + ', ' : ''}${lead.country || 'país desconhecido'}.`;
+  if (lead.raw_text) {
+    prompt += `\n\nTexto original colado sobre esse lead/empresa:\n${lead.raw_text.slice(0, 4000)}\n\nUse esse texto para identificar sinais reais de contratação em TI, vagas abertas, menção a IA/automação ou transformação digital, se houver.`;
+  }
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -17,6 +20,7 @@ export async function scoreLeadWithGroq(lead) {
             'ICP (perfil de cliente ideal): decisor de tecnologia (CTO, Head de Produto, Head de Tecnologia, Gerente de TI/Produto) em PMEs (pequenas e médias empresas) que provavelmente não têm capacidade interna de IA e precisariam terceirizar. ' +
             'Dê score mais alto quando o cargo bate exatamente com o ICP (CTO/Head Tech/Head Produto/Gerência TI), a empresa parece ser PME (não multinacional/big tech, sem sinal de time de IA próprio), e o setor da empresa sugere demanda real por automação/IA (ex: imobiliária, varejo, serviços, saúde, logística). ' +
             'Dê score mais baixo para cargos não-técnicos, empresas claramente grandes/big tech (que têm time interno robusto) ou perfis genéricos sem ligação clara a tecnologia. ' +
+            'Se receber um texto colado (posts, "sobre a empresa", descrição de vaga etc.), procure ativamente por sinais explícitos de contratação (ex: "estamos contratando", "vaga aberta", "hiring", posts sobre expansão de equipe de tecnologia) e cite isso nos hot_signals quando encontrar. ' +
             'Responda SOMENTE em JSON: {"score": numero inteiro de 0 a 100, "hot_signals": [3 a 5 strings curtas explicando por que o lead é promissor, citando especificamente cargo/empresa/setor quando relevante], "outreach_message": uma mensagem de primeiro contato curta (2-3 frases), profissional e personalizada, em português, mencionando como podemos ajudar a empresa dele com IA/automação}.',
         },
         { role: 'user', content: prompt },

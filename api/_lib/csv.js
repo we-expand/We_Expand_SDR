@@ -1,3 +1,10 @@
+export function stripLinkedInConnectionsPreamble(text) {
+  const lines = text.split(/\r?\n/);
+  const headerIdx = lines.findIndex(l => /^"?first name"?,/i.test(l.trim()));
+  if (headerIdx === -1) return text;
+  return lines.slice(headerIdx).join('\n');
+}
+
 export function parseCsv(text) {
   const rows = [];
   let row = [];
@@ -58,11 +65,13 @@ const FIELD_ALIASES = {
   company: ['company', 'company name', 'organization', 'organization name'],
   country: ['country', 'person country'],
   city: ['city', 'person city'],
-  linkedinUrl: ['person linkedin url', 'linkedin url', 'linkedin', 'li_profile_url'],
+  linkedinUrl: ['person linkedin url', 'linkedin url', 'linkedin', 'li_profile_url', 'url'],
   website: ['website', 'company website url', 'website url'],
   email: ['email', 'person email', 'email address'],
   phone: ['phone', 'phone number', 'mobile phone', 'corporate phone'],
 };
+
+FIELD_ALIASES.title.push('position');
 
 function findField(record, aliasKey) {
   const aliases = FIELD_ALIASES[aliasKey];
