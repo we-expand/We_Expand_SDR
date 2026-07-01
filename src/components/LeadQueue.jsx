@@ -22,9 +22,11 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLe
   const [searchText, setSearchText] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [pageSize, setPageSize] = useState(50);
+  const [page, setPage] = useState(1);
 
   const searchLower = searchText.toLowerCase();
-  const visibleLeads = leads.filter(lead => {
+  const filteredLeads = leads.filter(lead => {
     if ((lead.score ?? 0) < minScore) return false;
     if (!searchLower) return true;
     return (
@@ -33,8 +35,27 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLe
       (lead.company || '').toLowerCase().includes(searchLower)
     );
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredLeads.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const visibleLeads = filteredLeads.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const visibleIds = visibleLeads.map(l => l.id);
   const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
+
+  function handlePageSizeChange(size) {
+    setPageSize(size);
+    setPage(1);
+  }
+
+  function handleSearchChange(e) {
+    setSearchText(e.target.value);
+    setPage(1);
+  }
+
+  function handleMinScoreChange(e) {
+    setMinScore(Number(e.target.value));
+    setPage(1);
+  }
 
   function toggleSelect(id) {
     setSelectedIds(prev => {
@@ -85,8 +106,9 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLe
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Fila de leads quentes</h2>
           <p className="text-gray-600 mt-2">
-            {visibleLeads.length} {visibleLeads.length === 1 ? 'lead encontrado' : 'leads encontrados'}
-            {minScore > 0 && ` (de ${leads.length} no total)`}
+            {filteredLeads.length} {filteredLeads.length === 1 ? 'lead encontrado' : 'leads encontrados'}
+            {filteredLeads.length !== leads.length && ` (de ${leads.length} no total)`}
+            {totalPages > 1 && ` — página ${currentPage} de ${totalPages}`}
           </p>
         </div>
         <button
@@ -104,10 +126,10 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLe
             type="text"
             placeholder="🔍 Buscar por nome, cargo ou empresa..."
             value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            onChange={handleSearchChange}
             className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <label htmlFor="min-score" className="text-sm font-semibold text-gray-700 whitespace-nowrap">
               🎯 Score mínimo: {minScore}
             </label>
@@ -118,9 +140,21 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLe
               max="100"
               step="10"
               value={minScore}
-              onChange={(e) => setMinScore(Number(e.target.value))}
-              className="flex-1"
+              onChange={handleMinScoreChange}
+              className="flex-1 min-w-32"
             />
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-sm text-gray-600 whitespace-nowrap">Leads por página:</span>
+              {[50, 100].map(size => (
+                <button
+                  key={size}
+                  onClick={() => handlePageSizeChange(size)}
+                  className={`px-3 py-1 text-sm font-semibold rounded-lg border transition-colors ${pageSize === size ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -165,6 +199,48 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLe
               onToggleSelect={() => toggleSelect(lead.id)}
             />
           ))}
+        </div>
+      )}
+
+      {/* Paginação */}
+      {totalPages > 1 && (
+        <div className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between gap-4">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-gray-700 font-semibold rounded-lg transition-colors"
+          >
+            ← Anterior
+          </button>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+              .reduce((acc, p, idx, arr) => {
+                if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, idx) =>
+                p === '...' ? (
+                  <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-9 h-9 text-sm font-semibold rounded-lg transition-colors ${p === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+          </div>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-gray-700 font-semibold rounded-lg transition-colors"
+          >
+            Próxima →
+          </button>
         </div>
       )}
     </div>
