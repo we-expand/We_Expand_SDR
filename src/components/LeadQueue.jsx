@@ -361,7 +361,7 @@ function LeadCard({ lead, onUpdated, onDeleted, selected, onToggleSelect }) {
               </button>
               <button
                 onClick={() => handleOutreach('linkedin')}
-                disabled={!lead.outreachMessage}
+                disabled={!lead.linkedin && !lead.outreachMessage}
                 title={lead.linkedin ? 'Copia a mensagem e abre o perfil do LinkedIn' : 'Sem LinkedIn cadastrado: só copia a mensagem'}
                 className="flex-1 px-4 py-2 bg-blue-900 hover:bg-blue-950 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors text-sm"
               >
