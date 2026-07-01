@@ -4,9 +4,13 @@ export default async function handler(req, res) {
   const supabase = getSupabaseAdmin();
 
   if (req.method === 'GET') {
-    const { q, titles, locations, cities, min_score } = req.query || {};
+    const { q, titles, locations, cities, min_score, missing_linkedin } = req.query || {};
 
     let query = supabase.from('leads').select('*');
+
+    if (missing_linkedin === '1') {
+      query = query.is('linkedin_url', null);
+    }
 
     if (q) {
       const safe = q.replace(/'/g, "''");
@@ -50,6 +54,29 @@ export default async function handler(req, res) {
     }
 
     res.status(200).json({ leads: data });
+    return;
+  }
+
+  if (req.method === 'PATCH') {
+    const { id, linkedin_url } = req.body || {};
+    if (!id || typeof linkedin_url !== 'string' || !linkedin_url.trim()) {
+      res.status(400).json({ error: 'Campos "id" e "linkedin_url" são obrigatórios' });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('leads')
+      .update({ linkedin_url: linkedin_url.trim(), updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.status(200).json({ lead: data });
     return;
   }
 

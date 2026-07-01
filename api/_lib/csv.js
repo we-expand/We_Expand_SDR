@@ -1,3 +1,8 @@
+export function extractLinkedinUrl(text) {
+  const match = (text || '').match(/https?:\/\/(?:www\.)?linkedin\.com\/in\/[a-zA-Z0-9\-_%]+\/?/);
+  return match ? match[0] : null;
+}
+
 export function stripLinkedInConnectionsPreamble(text) {
   const lines = text.split(/\r?\n/);
   const headerIdx = lines.findIndex(l => /^"?first name"?,/i.test(l.trim()));

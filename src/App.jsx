@@ -2,6 +2,7 @@ import { useState } from 'react';
 import SearchConfig from './components/SearchConfig';
 import LeadQueue from './components/LeadQueue';
 import ImportLeads from './components/ImportLeads';
+import CompleteLinkedin from './components/CompleteLinkedin';
 import { normalizeDbLead } from './lib/leadAdapter';
 import { apiUrl } from './lib/apiUrl';
 
@@ -93,6 +94,12 @@ function App() {
             >
               {loadingRealLeads ? 'Carregando...' : 'Meus leads'}
             </button>
+            <button
+              onClick={() => setScreen('complete-linkedin')}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${screen === 'complete-linkedin' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            >
+              Completar LinkedIn
+            </button>
           </div>
         </div>
       </nav>
@@ -100,6 +107,7 @@ function App() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {screen === 'config' && <SearchConfig onSearch={handleSearch} />}
         {screen === 'import' && <ImportLeads onBack={handleBackToConfig} />}
+        {screen === 'complete-linkedin' && <CompleteLinkedin onBack={handleBackToConfig} />}
         {screen === 'queue' && (
           <LeadQueue
             leads={filteredLeads}

@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from './_lib/supabase.js';
 import { extractLeadsFromText } from './_lib/groq.js';
 import { enrichLead } from './_lib/enrich.js';
+import { extractLinkedinUrl } from './_lib/csv.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -27,6 +28,10 @@ export default async function handler(req, res) {
     return;
   }
 
+  if (extracted.length === 1 && !extracted[0].linkedin_url) {
+    extracted[0].linkedin_url = extractLinkedinUrl(text);
+  }
+
   const supabase = getSupabaseAdmin();
   const results = { inserted: 0, updated: 0, failed: 0, rejected: 0, leads: [] };
 
@@ -43,6 +48,7 @@ export default async function handler(req, res) {
       p_company: lead.company,
       p_country: lead.country,
       p_city: lead.city,
+      p_linkedin_url: lead.linkedin_url || null,
       p_email: lead.email,
       p_phone: lead.phone,
       p_source: 'linkedin_paste',
