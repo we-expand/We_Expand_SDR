@@ -188,7 +188,7 @@ export default function ImportLeads({ onBack }) {
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-green-800">
           {result.connectionsMode
             ? `✅ ${result.inserted} conexão(ões) importada(s)${result.failed > 0 ? `, ${result.failed} falharam` : ''}.`
-            : `✅ ${result.inserted} lead(s) novo(s), ${result.updated} atualizado(s)${result.failed > 0 ? `, ${result.failed} falharam` : ''}.`}
+            : `✅ ${result.inserted} lead(s) novo(s), ${result.updated} atualizado(s)${result.failed > 0 ? `, ${result.failed} falharam` : ''}${result.rejected > 0 ? `, ${result.rejected} descartado(s) por score abaixo de 70` : ''}.`}
         </div>
       )}
 

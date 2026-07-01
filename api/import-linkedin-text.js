@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   }
 
   const supabase = getSupabaseAdmin();
-  const results = { inserted: 0, updated: 0, failed: 0, leads: [] };
+  const results = { inserted: 0, updated: 0, failed: 0, rejected: 0, leads: [] };
 
   for (const lead of extracted) {
     const { data: before } = await supabase
@@ -54,13 +54,19 @@ export default async function handler(req, res) {
       continue;
     }
 
-    if (before) results.updated++;
-    else results.inserted++;
-
+    let enriched;
     try {
-      results.leads.push(await enrichLead(supabase, data));
+      enriched = await enrichLead(supabase, data);
     } catch {
-      results.leads.push(data);
+      enriched = data;
+    }
+
+    if (enriched?.deleted) {
+      results.rejected++;
+    } else {
+      if (before) results.updated++;
+      else results.inserted++;
+      results.leads.push(enriched);
     }
   }
 

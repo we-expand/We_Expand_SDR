@@ -308,6 +308,11 @@ function LeadCard({ lead, onUpdated, onDeleted, selected, onToggleSelect }) {
       if (!res.ok || !result || result.error) {
         throw new Error(result?.error || data.error || 'Falha ao analisar');
       }
+      if (result.deleted) {
+        onDeleted?.(result.id);
+        window.alert(`Lead descartado: score ${result.score} está abaixo do mínimo (70).`);
+        return;
+      }
       onUpdated?.(normalizeDbLead(result));
     } catch (err) {
       setAnalyzeError(err.message);
@@ -316,8 +321,10 @@ function LeadCard({ lead, onUpdated, onDeleted, selected, onToggleSelect }) {
     }
   }
 
+  const isConnectionImport = lead.source === 'linkedin_connections';
+
   return (
-    <div className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 ${selected ? 'border-red-500 ring-2 ring-red-200' : 'border-blue-500'}`}>
+    <div className={`rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 ${selected ? 'border-red-500 ring-2 ring-red-200 bg-white' : isConnectionImport ? 'border-purple-400 bg-purple-50' : 'border-blue-500 bg-white'}`}>
       <div className="flex gap-6">
         {/* Seleção */}
         <div className="flex-shrink-0 pt-1">
@@ -353,6 +360,11 @@ function LeadCard({ lead, onUpdated, onDeleted, selected, onToggleSelect }) {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <h3 className="text-xl font-bold text-gray-900">{lead.name}</h3>
+              {isConnectionImport && (
+                <span className="inline-block mb-1 px-2 py-0.5 bg-purple-200 text-purple-800 text-xs font-semibold rounded-full">
+                  🔗 Conexão do LinkedIn
+                </span>
+              )}
               <p className="text-sm text-blue-600 font-semibold">{lead.title}</p>
               <p className="text-sm text-gray-600">{lead.company}</p>
               <p className="text-xs text-gray-500 mt-1">

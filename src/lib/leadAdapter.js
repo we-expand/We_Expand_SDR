@@ -20,5 +20,6 @@ export function normalizeDbLead(row) {
     outreachMessage: row.outreach_message,
     status: row.status,
     titleHistory: row.title_history || [],
+    source: row.source || null,
   };
 }
