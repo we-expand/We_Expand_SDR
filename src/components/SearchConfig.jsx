@@ -2,13 +2,22 @@ import { useState } from 'react';
 
 export default function SearchConfig({ onSearch }) {
   const [titles, setTitles] = useState([]);
+  const [customTitle, setCustomTitle] = useState('');
   const [companyTypes, setCompanyTypes] = useState([]);
   const [locations, setLocations] = useState(['Mundo']);
   const [cities, setCities] = useState('');
   const [keyword, setKeyword] = useState('');
   const [combineMode, setCombineMode] = useState('AND');
 
-  const titleOptions = ['Founder', 'CEO', 'CTO', 'Head de Produto', 'VP Engenharia', 'Tech Lead'];
+  const titleOptions = [
+    'Founder', 'Co-Founder', 'CEO', 'COO', 'CFO', 'CTO', 'CIO', 'CDO', 'CISO',
+    'VP Engenharia', 'VP Tecnologia', 'VP Produto', 'VP TI',
+    'Head de Produto', 'Head de Tecnologia', 'Head de TI', 'Head de Inovação', 'Head de Desenvolvimento',
+    'Diretor de TI', 'Diretor de Tecnologia', 'Diretor de Produto', 'Diretor de Inovação',
+    'Gerente de TI', 'Gerente de Tecnologia', 'Gerente de Produto', 'Gerente de Projetos',
+    'Tech Lead', 'Engineering Manager', 'Product Manager', 'Scrum Master', 'Agile Coach',
+    'Sócio', 'Proprietário', 'Gestor',
+  ];
   const companyTypeOptions = [
     'Startup pré-seed',
     'Startup Série A',
@@ -66,6 +75,50 @@ export default function SearchConfig({ onSearch }) {
                 <span className="ml-3 text-gray-700">{title}</span>
               </label>
             ))}
+          </div>
+
+          {/* Cargos customizados */}
+          <div className="mt-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              ✏️ Adicionar cargo personalizado
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customTitle}
+                onChange={(e) => setCustomTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && customTitle.trim()) {
+                    const t = customTitle.trim();
+                    if (!titles.includes(t)) setTitles(prev => [...prev, t]);
+                    setCustomTitle('');
+                  }
+                }}
+                placeholder="Ex: Superintendente, Coordenador de TI..."
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const t = customTitle.trim();
+                  if (t && !titles.includes(t)) setTitles(prev => [...prev, t]);
+                  setCustomTitle('');
+                }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                Adicionar
+              </button>
+            </div>
+            {titles.filter(t => !titleOptions.includes(t)).length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {titles.filter(t => !titleOptions.includes(t)).map(t => (
+                  <span key={t} className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">
+                    {t}
+                    <button onClick={() => setTitles(prev => prev.filter(x => x !== t))} className="hover:text-red-600 ml-1">×</button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
