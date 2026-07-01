@@ -360,11 +360,21 @@ function LeadCard({ lead, onUpdated, onDeleted, selected, onToggleSelect }) {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <h3 className="text-xl font-bold text-gray-900">{lead.name}</h3>
-              {isConnectionImport && (
-                <span className="inline-block mb-1 px-2 py-0.5 bg-purple-200 text-purple-800 text-xs font-semibold rounded-full">
-                  🔗 Conexão do LinkedIn
-                </span>
-              )}
+              <div className="flex flex-wrap gap-1 mb-1">
+                {isConnectionImport && (
+                  <span className="inline-block px-2 py-0.5 bg-purple-200 text-purple-800 text-xs font-semibold rounded-full">
+                    🔗 Conexão do LinkedIn
+                  </span>
+                )}
+                {lead.freeMessageChannel && (
+                  <span
+                    className="inline-block px-2 py-0.5 bg-green-200 text-green-800 text-xs font-semibold rounded-full"
+                    title="Já é 1º grau de conexão — pode mandar mensagem direta pelo LinkedIn sem custo de InMail"
+                  >
+                    📩 Canal direto grátis
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-blue-600 font-semibold">{lead.title}</p>
               <p className="text-sm text-gray-600">{lead.company}</p>
               <p className="text-xs text-gray-500 mt-1">

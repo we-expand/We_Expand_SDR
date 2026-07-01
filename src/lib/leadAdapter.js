@@ -1,3 +1,8 @@
+function isFirstDegreeInText(rawText) {
+  if (!rawText) return false;
+  return /[•·]\s*1º/.test(rawText.slice(0, 150));
+}
+
 export function normalizeDbLead(row) {
   return {
     id: row.id,
@@ -21,5 +26,6 @@ export function normalizeDbLead(row) {
     status: row.status,
     titleHistory: row.title_history || [],
     source: row.source || null,
+    freeMessageChannel: row.source === 'linkedin_connections' || isFirstDegreeInText(row.raw_text),
   };
 }
