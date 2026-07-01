@@ -4,11 +4,45 @@ export default async function handler(req, res) {
   const supabase = getSupabaseAdmin();
 
   if (req.method === 'GET') {
-    const { data, error } = await supabase
-      .from('leads')
-      .select('*')
+    const { q, titles, locations, cities, min_score } = req.query || {};
+
+    let query = supabase.from('leads').select('*');
+
+    if (q) {
+      const safe = q.replace(/'/g, "''");
+      query = query.or(`name.ilike.%${safe}%,title.ilike.%${safe}%,company.ilike.%${safe}%`);
+    }
+
+    if (titles) {
+      const list = titles.split(',').map(t => t.trim()).filter(Boolean);
+      if (list.length) {
+        query = query.or(list.map(t => `title.ilike.%${t.replace(/'/g, "''")}%`).join(','));
+      }
+    }
+
+    if (locations) {
+      const list = locations.split(',').map(l => l.trim()).filter(Boolean);
+      if (list.length) {
+        query = query.or(list.map(l => `country.ilike.%${l.replace(/'/g, "''")}%`).join(','));
+      }
+    }
+
+    if (cities) {
+      const list = cities.split(',').map(c => c.trim()).filter(Boolean);
+      if (list.length) {
+        query = query.or(list.map(c => `city.ilike.%${c.replace(/'/g, "''")}%`).join(','));
+      }
+    }
+
+    if (min_score) {
+      query = query.gte('score', Number(min_score));
+    }
+
+    query = query
       .order('score', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
+
+    const { data, error } = await query;
 
     if (error) {
       res.status(500).json({ error: error.message });

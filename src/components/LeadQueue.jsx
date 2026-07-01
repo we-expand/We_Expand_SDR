@@ -19,10 +19,20 @@ function ContactBadge({ status }) {
 
 export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLeadDeleted, onLeadsBulkDeleted }) {
   const [minScore, setMinScore] = useState(0);
+  const [searchText, setSearchText] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
-  const visibleLeads = leads.filter(lead => (lead.score ?? 0) >= minScore);
+  const searchLower = searchText.toLowerCase();
+  const visibleLeads = leads.filter(lead => {
+    if ((lead.score ?? 0) < minScore) return false;
+    if (!searchLower) return true;
+    return (
+      (lead.name || '').toLowerCase().includes(searchLower) ||
+      (lead.title || '').toLowerCase().includes(searchLower) ||
+      (lead.company || '').toLowerCase().includes(searchLower)
+    );
+  });
   const visibleIds = visibleLeads.map(l => l.id);
   const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
 
@@ -87,22 +97,31 @@ export default function LeadQueue({ leads, criteria, onBack, onLeadUpdated, onLe
         </button>
       </div>
 
-      {/* Filtro de score mínimo */}
+      {/* Filtros */}
       {leads.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm p-4 flex items-center gap-4">
-          <label htmlFor="min-score" className="text-sm font-semibold text-gray-700 whitespace-nowrap">
-            🎯 Score mínimo: {minScore}
-          </label>
+        <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col gap-3">
           <input
-            id="min-score"
-            type="range"
-            min="0"
-            max="100"
-            step="10"
-            value={minScore}
-            onChange={(e) => setMinScore(Number(e.target.value))}
-            className="flex-1"
+            type="text"
+            placeholder="🔍 Buscar por nome, cargo ou empresa..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
+          <div className="flex items-center gap-4">
+            <label htmlFor="min-score" className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+              🎯 Score mínimo: {minScore}
+            </label>
+            <input
+              id="min-score"
+              type="range"
+              min="0"
+              max="100"
+              step="10"
+              value={minScore}
+              onChange={(e) => setMinScore(Number(e.target.value))}
+              className="flex-1"
+            />
+          </div>
         </div>
       )}
 

@@ -39,7 +39,9 @@ export function apiDevMiddleware() {
           }
         }
 
-        const fakeReq = { method: req.method, body, query: {} };
+        const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?') + 1) : '';
+        const query = Object.fromEntries(new URLSearchParams(qs));
+        const fakeReq = { method: req.method, body, query };
         const fakeRes = {
           statusCode: 200,
           status(code) {

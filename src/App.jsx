@@ -2,8 +2,6 @@ import { useState } from 'react';
 import SearchConfig from './components/SearchConfig';
 import LeadQueue from './components/LeadQueue';
 import ImportLeads from './components/ImportLeads';
-import { mockLeads } from './data/mockLeads';
-import { matchesBooleanQuery } from './lib/booleanSearch';
 import { normalizeDbLead } from './lib/leadAdapter';
 import { apiUrl } from './lib/apiUrl';
 
@@ -28,39 +26,26 @@ function App() {
     }
   };
 
-  const handleSearch = (searchCriteria) => {
+  const handleSearch = async (searchCriteria) => {
+    setLoadingRealLeads(true);
     setCriteria(searchCriteria);
-    const specificLocations = searchCriteria.locations.filter(loc => loc !== 'Mundo');
-    const combineMode = searchCriteria.combineMode || 'AND';
-
-    const cities = searchCriteria.cities || [];
-
-    const filtered = mockLeads.filter(lead => {
-      const titleMatch = searchCriteria.titles.some(t => lead.title.toLowerCase().includes(t.toLowerCase()));
-      const companyTypeMatch = searchCriteria.companyTypes.includes(lead.companyType);
-      const locationMatch = specificLocations.some(loc => lead.country.toLowerCase().includes(loc.toLowerCase()));
-      const cityMatch = cities.some(c => (lead.city || '').toLowerCase().includes(c.toLowerCase()));
-
-      const activeGroupMatches = [];
-      if (searchCriteria.titles.length) activeGroupMatches.push(titleMatch);
-      if (searchCriteria.companyTypes.length) activeGroupMatches.push(companyTypeMatch);
-      if (specificLocations.length) activeGroupMatches.push(locationMatch);
-      if (cities.length) activeGroupMatches.push(cityMatch);
-
-      const groupsOverall = activeGroupMatches.length === 0
-        ? true
-        : combineMode === 'OR'
-          ? activeGroupMatches.some(Boolean)
-          : activeGroupMatches.every(Boolean);
-
-      const haystack = [lead.name, lead.title, lead.company, lead.companyType, lead.country, ...lead.hotSignals].join(' ');
-      const keywordMatch = matchesBooleanQuery(haystack, searchCriteria.keyword);
-
-      return groupsOverall && keywordMatch;
-    });
-
-    setFilteredLeads(filtered);
-    setScreen('queue');
+    try {
+      const params = new URLSearchParams();
+      if (searchCriteria.keyword) params.set('q', searchCriteria.keyword);
+      if (searchCriteria.titles.length) params.set('titles', searchCriteria.titles.join(','));
+      const specificLocations = (searchCriteria.locations || []).filter(l => l !== 'Mundo');
+      if (specificLocations.length) params.set('locations', specificLocations.join(','));
+      if (searchCriteria.cities && searchCriteria.cities.length) params.set('cities', searchCriteria.cities.join(','));
+      const url = params.toString() ? `${apiUrl('/api/leads')}?${params}` : apiUrl('/api/leads');
+      const res = await fetch(url);
+      const data = await res.json();
+      setFilteredLeads((data.leads || []).map(normalizeDbLead));
+    } catch {
+      setFilteredLeads([]);
+    } finally {
+      setLoadingRealLeads(false);
+      setScreen('queue');
+    }
   };
 
   const handleBackToConfig = () => {
@@ -93,7 +78,7 @@ function App() {
               onClick={() => setScreen('config')}
               className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${screen === 'config' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
             >
-              Buscar (demo)
+              Buscar
             </button>
             <button
               onClick={() => setScreen('import')}
